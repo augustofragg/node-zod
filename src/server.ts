@@ -1,5 +1,5 @@
 import express from 'express';
-import z from 'zod';
+import { jsonplaceholderResponse, userSchema} from './schema/schema';
 
 const server = express();
 
@@ -12,26 +12,37 @@ server.get('/ping',(req,res) => {
 })
 
 server.post('/inserir',(req,res) => {
-    const requestSchema = z.object({
-        id: z.number(),
-        name: z.string().min(2),
-        age: z.number()
-    })
-
-    const result = requestSchema.safeParse(req.body);
+    const result = userSchema.safeParse(req.body);
 
     if(!result.success) {
-        res.status(400).json({error:'Corpo da requisição incorreto'})
+        res.json({error:'Dados inválidos'})
         return
     }
 
-    const  { id , name, age } = req.body;
+    const  {name , email, age } = req.body;
 
-    console.log('teste');
-    console.log(id, name, age);
+    //Processando
+    console.log('Processando...');
+    console.log(name , email, age);
 
-    res.json({response:'ok'})
+    res.status(201).json({result:'tudo ok'})
 });
+
+server.get('/posts', async (req,res) => {
+
+    const request = await fetch('https://jsonplaceholder.typicode.com/posts');
+    const data = await request.json();
+
+    const result = jsonplaceholderResponse.safeParse(data);
+    if(!result.success) {
+        res.status(500).json({erro:'Ocorreu um erro interno'})
+        return
+    }
+
+    let totalPosts = result.data.length
+
+    res.json({total: totalPosts})
+})
 
 server.listen(3000,() => {
 
